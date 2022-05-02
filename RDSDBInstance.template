@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: RDS DB Instance template
+Parameters:
+  DBSnapshotIdentifier:
+    Type: String
+    Description: Enter the masked snapshot identifier that will be used to create the RDS instance.
+
+  DBInstanceClass:
+    Type: String
+    Default: db.t3.small
+    Description: Enter the instance size.
+
+  DBInstanceIdentifier:
+    Type: String
+    Description: Enter the identified for the new RDS instance.
+
+  OptionGroupName:
+    Type: String
+    Description: Enter the Option Group Name for the new RDS instance.
+
+  DBParameterGroupName:
+    Type: String
+    Description: Enter the DB Parameter Group for the new RDS instance.
+
+  DBSubnetGroupName:
+    Type: String
+    Description: Enter the Subnet Group Name for the new RDS instance.
+
+  AvailabilityZone:
+    Type: String
+    Description: Enter the Availability Zone Name for the new RDS instance.
+
+  VPCSecurityGroups:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+    Description: Enter the Security Group ID for the new RDS instance.
+
+Resources:
+  RDSDBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBSnapshotIdentifier: !Ref DBSnapshotIdentifier
+      DBInstanceClass: !Ref DBInstanceClass
+      DBInstanceIdentifier: !Ref DBInstanceIdentifier
+      OptionGroupName: !Ref OptionGroupName
+      DBParameterGroupName: !Ref DBParameterGroupName
+      DBSubnetGroupName: !Ref DBSubnetGroupName
+      AvailabilityZone: !Ref AvailabilityZone
+      DeleteAutomatedBackups: true
+      DeletionProtection: false
+      VPCSecurityGroups: !Ref VPCSecurityGroups
