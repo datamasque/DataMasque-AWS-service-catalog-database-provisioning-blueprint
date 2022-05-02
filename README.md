@@ -12,7 +12,7 @@ The diagram below describes the DataMasque reference architecture in AWS.  This 
 Follow the steps below to create AWS Service Catalog product using this CloudFormation template:
 
 1. Download this AWS CloudFormation Template
-2. Update the AWS CloudFormation Template to use `Default` to specify  set the required configurations (i.e. DBInstanceIdentifier) for the End Users.  
+2. Update the AWS CloudFormation Template to use `Default` to specify  the required configurations (i.e. DBInstanceIdentifier) for the End Users.  
 2. Create an [AWS Service Catalog Portfolio](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstarted-portfolio.html).
 3. Create an [AWS Service Catalog Product](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstarted-product.html).
 4. Create an [IAM group for End Users to launch products](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstarted-iamenduser.html).
