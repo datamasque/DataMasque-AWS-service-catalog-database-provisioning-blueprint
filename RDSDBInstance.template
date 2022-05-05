@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: RDS DB Instance template
 Parameters:
-  DBSnapshotIdentifier:
+  DBClusterSnapshotIdentifier:
     Type: String
     Description: Enter the masked snapshot identifier that will be used to create the RDS instance.
 
@@ -10,41 +10,51 @@ Parameters:
     Default: db.t3.small
     Description: Enter the instance size.
 
-  DBInstanceIdentifier:
+  DBClusterEngine:
     Type: String
-    Description: Enter the identified for the new RDS instance.
+    Description: Aurora Cluster DB Engine.
 
-  OptionGroupName:
+  DBClusterEngineVersion:
     Type: String
-    Description: Enter the Option Group Name for the new RDS instance.
+    Description: Aurora Cluster DB Engine Version.
 
-  DBParameterGroupName:
+  DBClusterIdentifier:
     Type: String
-    Description: Enter the DB Parameter Group for the new RDS instance.
+    Description: Enter the identified for the new RDS Cluster.
 
-  DBSubnetGroupName:
+  DBClusterSubnetGroupName:
     Type: String
-    Description: Enter the Subnet Group Name for the new RDS instance.
-
-  AvailabilityZone:
-    Type: String
-    Description: Enter the Availability Zone Name for the new RDS instance.
+    Description: Enter the Subnet Group Name for the new RDS Cluster.
 
   VPCSecurityGroups:
     Type: List<AWS::EC2::SecurityGroup::Id>
-    Description: Enter the Security Group ID for the new RDS instance.
+    Description: Enter the Security Group ID for the new RDS Cluster.
 
 Resources:
+
+  AuroraDBCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      SnapshotIdentifier: !Ref DBClusterSnapshotIdentifier
+      DBClusterIdentifier: !Ref DBClusterIdentifier
+      Engine: !Ref DBClusterEngine
+      EngineVersion: !Ref DBClusterEngineVersion
+      DBSubnetGroupName: !Ref DBClusterSubnetGroupName
+      VpcSecurityGroupIds: !Ref VPCSecurityGroups
+      DeletionProtection: False
+
   RDSDBInstance:
     Type: AWS::RDS::DBInstance
     Properties:
-      DBSnapshotIdentifier: !Ref DBSnapshotIdentifier
+      DBClusterIdentifier: !Ref DBClusterIdentifier
       DBInstanceClass: !Ref DBInstanceClass
-      DBInstanceIdentifier: !Ref DBInstanceIdentifier
-      OptionGroupName: !Ref OptionGroupName
-      DBParameterGroupName: !Ref DBParameterGroupName
-      DBSubnetGroupName: !Ref DBSubnetGroupName
-      AvailabilityZone: !Ref AvailabilityZone
-      DeleteAutomatedBackups: true
-      DeletionProtection: false
-      VPCSecurityGroups: !Ref VPCSecurityGroups
+      DBInstanceIdentifier: !Join
+        - ''
+        - - !Ref DBClusterIdentifier
+          - 'dtq'
+      Engine: !Ref DBClusterEngine
+
+
+
+
+

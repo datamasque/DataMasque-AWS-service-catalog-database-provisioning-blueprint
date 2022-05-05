@@ -17,18 +17,17 @@ Reference: https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstart
 
 ## Parameters
 
-| Parameter              | Description                                                             |
-|------------------------|-------------------------------------------------------------------------|
-| DBSnapshotIdentifier   | The masked snapshot that will be used to provision the new RDS instance |
-| DBInstanceClass        | Instance class for the new RDS instance.                                |
-| DBInstanceIdentifier   | RDS instance identifier.                                                |
-| OptionGroupName        | RDS instance Option Group.                                              |
-| DBParameterGroupName   | RDS instance Parameter Group.                                           | 
-| DBSubnetGroupName      | RDS instance Subnet Group.                                              | 
-| AvailabilityZone       | RDS Availability Zone.                                                  |
-| VPCSecurityGroups      | RDS Security Group.                                                     |
+| Parameter                   | Description                                                            |
+|-----------------------------|------------------------------------------------------------------------|
+| DBClusterSnapshotIdentifier | The masked snapshot that will be used to provision the new RDS cluster |
+| DBInstanceClass             | Instance class for the new RDS instance.                               |
+| DBClusterEngine             | RDS Cluster Engine.                                                    |
+| DBClusterEngineVersion      | RDS Cluster Engine Version.                                            |
+| DBClusterIdentifier         | RDS Cluster identifier.                                                |
+| DBClusterSubnetGroupName    | RDS Cluster Subnet Group.                                              |
+| VPCSecurityGroups           | RDS Security Group.                                                    |
 
 ## Notes
 
-- The **AWS Service Catalog RDS Provisioning template** should be used as a provisioning method of a **DATAMASQUE** masked snapshot.
-- **The template parameters will vary each RDS database instance and should be used as a blueprint.**
+- The **AWS Service Catalog Aurora Provisioning template** should be used as a provisioning method of a **DATAMASQUE** masked cluster snapshot.
+- **The template parameters will vary each RDS database cluster and should be used as a blueprint.**
