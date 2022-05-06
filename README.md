@@ -1,10 +1,12 @@
-# AWS Service Catalog RDS Provisioning Template
+# AWS RDS Service Catalog Provisioning Template
 
 ## Introduction
 
 DataMasque AWS blueprint template is written in AWS CloudFormation format. The purpose of this template is to create a reusable data provisioning pipeline that calls DataMasque APIs to produce masked data that's safe for consumption in non-production environment.
 
-The diagram below describes the DataMasque reference architecture in AWS.  This CloudFormation template is used to setup an AWS Service Catalog Product to give end users access to provision RDS instances from a masked RDS snapshot - this incoporiates steps 6, 7 & 8 highlighted in purple.  Please refer to [DataMasque AWS Masking Step Functions CloudFormation Template](https://github.com/datamasque/DataMasque-AWS-masking-stepfunctions-blueprint) to automate creation of masked RDS/Aurora snapshots.
+The diagram below describes the DataMasque reference architecture in AWS.  This CloudFormation template is used to set up an AWS Service Catalog Products to give end-users access to provision RDS instances from a masked Aurora snapshot - this incorporates the self-service steps highlighted in purple.  
+
+Please refer to [DataMasque AWS RDS Masking Step Functions CloudFormation Template](https://github.com/datamasque/DataMasque-AWS-masking-stepfunctions-blueprint) to automate masking RDS/Aurora snapshots.
 
 ![Reference deployment](reference_deployment.png "Reference deployment")
 
