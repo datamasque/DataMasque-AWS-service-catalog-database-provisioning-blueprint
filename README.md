@@ -10,7 +10,7 @@ The diagram below describes the DataMasque reference architecture in AWS.  This 
 
 For masking and provisioning RDS Aurora instances, please use the following templates:
 - Automate masking RDS Aurora snapshots: [DataMasque AWS Aurora Masking Step Functions CloudFormation Template](https://github.com/datamasque/DataMasque-AWS-Aurora-masking-stepfunctions-blueprint).
-- Provision RDS instances: use the main-aurora branch from [AWS Service Catalog Provisioning template](https://github.com/datamasque/DataMasque-AWS-service-catalog-database-provisioning-blueprint).
+- Provision RDS Aurora instances: use the main-aurora branch from [AWS Service Catalog Provisioning template](https://github.com/datamasque/DataMasque-AWS-service-catalog-database-provisioning-blueprint).
 
 ## Step-by-step
 Follow the steps below to create AWS Service Catalog product using this CloudFormation template:
