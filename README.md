@@ -12,8 +12,6 @@ For masking and provisioning RDS, please use the following templates:
 - Automate masking RDS/Aurora snapshots: [DataMasque AWS RDS Masking Step Functions CloudFormation Template](https://github.com/datamasque/DataMasque-AWS-RDS-masking-stepfunctions-blueprint).
 - Provision RDS instances: [AWS Service Catalog RDS Provisioning template](https://github.com/datamasque/DataMasque-AWS-service-catalog-database-provisioning-blueprint).
 
-Please refer to
-
 ## Step-by-step
 Follow the steps below to create AWS Service Catalog products using this CloudFormation template:
 
