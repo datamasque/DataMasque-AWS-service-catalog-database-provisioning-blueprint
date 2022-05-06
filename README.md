@@ -1,17 +1,29 @@
-# AWS Service Catalog RDS Provisioning template
+# AWS Aurora Service Catalog Provisioning Template
 
 ## Introduction
 
-AWS Service catalog gives access to the users to deploy AWS resources without having to have access to underline resources.
+DataMasque AWS blueprint template is written in AWS CloudFormation format. The purpose of this template is to create a reusable data provisioning pipeline that calls DataMasque APIs to produce masked data that's safe for consumption in non-production environment.
 
-## How to use.
+The diagram below describes the DataMasque reference architecture in AWS.  This CloudFormation template is used to set up AWS Service Catalog Products to give end-users access to provision RDS Aurora instances from a [masked RDS Aurora snapshot](https://github.com/datamasque/DataMasque-AWS-Aurora-masking-stepfunctions-blueprint) - this incorporates the **self-service** steps highlighted in purple.  
 
-- Step 1: Download the AWS CloudFormation Template
-- Step 3: Create an AWS Service Catalog Portfolio
-- Step 4: Create an AWS Service Catalog Product
-- Step 5: Assign the Product to the Portfolio
-- Step 6: Grant End Users Access to the Portfolio
-- Step 7: Test the End User Experience
+![Reference deployment](reference_deployment.png "Reference deployment")
+
+For masking and provisioning RDS, please use the following templates:
+- Automate masking RDS/Aurora snapshots: [DataMasque AWS RDS Masking Step Functions CloudFormation Template](https://github.com/datamasque/DataMasque-AWS-RDS-masking-stepfunctions-blueprint).
+- Provision RDS instances: [AWS Service Catalog RDS Provisioning template](https://github.com/datamasque/DataMasque-AWS-service-catalog-database-provisioning-blueprint).
+
+Please refer to
+
+## Step-by-step
+Follow the steps below to create AWS Service Catalog products using this CloudFormation template:
+
+1. Download this AWS CloudFormation Template
+2. Update the AWS CloudFormation Template to use `Default` to specify  the required configurations (i.e. DBInstanceIdentifier) for the End Users.  
+2. Create an [AWS Service Catalog Portfolio](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstarted-portfolio.html).
+3. Create an [AWS Service Catalog Product](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstarted-product.html).
+4. Create an [IAM group for End Users to launch products](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstarted-iamenduser.html).
+5. Grant [End Users access to the Portfolio](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstarted-deploy.html).
+6. Test the [newly setup product to test the End User experience](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstarted-verify.html).
 
 Reference: https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstarted.html
 
@@ -29,5 +41,5 @@ Reference: https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstart
 
 ## Notes
 
-- The **AWS Service Catalog Aurora Provisioning template** should be used as a provisioning method of a **DATAMASQUE** masked cluster snapshot.
-- **The template parameters will vary each RDS database cluster and should be used as a blueprint.**
+- The **AWS Service Catalog RDS Provisioning template** should be used as a provisioning method of a **DataMasque** masked snapshot.
+- **The parameters** to the created AWS Service Catalog products **need reflect your setup** and **preferred configurations** within your AWS Environment.
