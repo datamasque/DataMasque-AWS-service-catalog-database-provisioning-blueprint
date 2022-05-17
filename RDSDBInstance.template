@@ -4,6 +4,7 @@ Parameters:
   DBClusterSnapshotIdentifier:
     Type: String
     Description: Enter the masked snapshot identifier that will be used to create the RDS instance.
+    AllowedValues: []
 
   DBInstanceClass:
     Type: String
@@ -35,26 +36,31 @@ Resources:
   AuroraDBCluster:
     Type: AWS::RDS::DBCluster
     Properties:
-      SnapshotIdentifier: !Ref DBClusterSnapshotIdentifier
-      DBClusterIdentifier: !Ref DBClusterIdentifier
-      Engine: !Ref DBClusterEngine
-      EngineVersion: !Ref DBClusterEngineVersion
-      DBSubnetGroupName: !Ref DBClusterSubnetGroupName
-      VpcSecurityGroupIds: !Ref VPCSecurityGroups
+      SnapshotIdentifier:
+        Ref: DBClusterSnapshotIdentifier
+      DBClusterIdentifier:
+        Ref: DBClusterIdentifier
+      Engine:
+        Ref: DBClusterEngine
+      EngineVersion:
+        Ref: DBClusterEngineVersion
+      DBSubnetGroupName:
+        Ref: DBClusterSubnetGroupName
+      VpcSecurityGroupIds:
+        Ref: VPCSecurityGroups
       DeletionProtection: False
 
   RDSDBInstance:
     Type: AWS::RDS::DBInstance
     Properties:
-      DBClusterIdentifier: !Ref DBClusterIdentifier
-      DBInstanceClass: !Ref DBInstanceClass
-      DBInstanceIdentifier: !Join
-        - ''
-        - - !Ref DBClusterIdentifier
-          - 'dtq'
-      Engine: !Ref DBClusterEngine
-
-
-
-
-
+      DBClusterIdentifier:
+        Ref: DBClusterIdentifier
+      DBInstanceClass:
+        Ref: DBInstanceClass
+      DBInstanceIdentifier:
+        Join:
+          - ''
+          - - Ref: DBClusterIdentifier
+            - 'dtq'
+        Engine:
+          Ref: DBClusterEngine
