@@ -53,6 +53,8 @@ Resources:
   RDSDBInstance:
     Type: AWS::RDS::DBInstance
     Properties:
+      DBSubnetGroupName:
+        Ref: DBClusterSubnetGroupName
       DBClusterIdentifier:
         Ref: DBClusterIdentifier
       DBInstanceClass:
