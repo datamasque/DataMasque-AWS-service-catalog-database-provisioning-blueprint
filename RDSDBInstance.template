@@ -52,6 +52,7 @@ Resources:
 
   RDSDBInstance:
     Type: AWS::RDS::DBInstance
+    DependsOn: AuroraDBCluster
     Properties:
       DBSubnetGroupName:
         Ref: DBClusterSubnetGroupName
