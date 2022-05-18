@@ -59,7 +59,7 @@ Resources:
         Ref: DBInstanceClass
       DBInstanceIdentifier:
         Join:
-          - ''
+          - '-'
           - - Ref: DBClusterIdentifier
             - 'dtq'
         Engine:
