@@ -57,6 +57,10 @@ Resources:
         Ref: DBClusterIdentifier
       DBInstanceClass:
         Ref: DBInstanceClass
-      DBInstanceIdentifier: "datamasque-instance-restored"
-        Engine:
-          Ref: DBClusterEngine
+      DBInstanceIdentifier:
+        Join:
+          - '-'
+          - - Ref: DBClusterIdentifier
+            - 'dtq'
+      Engine:
+        Ref: DBClusterEngine
