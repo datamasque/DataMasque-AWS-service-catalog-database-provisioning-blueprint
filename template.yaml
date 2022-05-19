@@ -13,19 +13,19 @@ Parameters:
   PortfolioName:
     Type: String
     Description: "AWS Service Catalog portfolio name."
-    Default: "DatamasquePortfolio"
+    Default: "DatamasquePortfolio2"
 
   ProductName:
     Type: String
     Description: "AWS Service Catalog product name."
-    Default: "DatamasqueRDSProvisioning"
+    Default: "DatamasqueRDSProvisioning2"
 
 Resources:
 
   S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: datamasque-servicecatalog-templates
+      BucketName: datamasque-servicecatalog-templates2
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:

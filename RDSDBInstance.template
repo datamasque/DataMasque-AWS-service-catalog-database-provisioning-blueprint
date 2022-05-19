@@ -53,7 +53,6 @@ Resources:
         Ref: DBSubnetGroupName
       AvailabilityZone:
         Ref: AvailabilityZone
-      DeleteAutomatedBackups: true
       DeletionProtection: false
       VPCSecurityGroups:
         Ref: VPCSecurityGroups
