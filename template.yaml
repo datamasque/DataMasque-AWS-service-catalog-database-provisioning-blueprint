@@ -1,0 +1,123 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  SourceTemplateURL:
+    Type: String
+    Description: URL of source template.
+
+  RDSIdentifier:
+    Type: String
+    Description: RDS DB Instance or Cluster identifier.
+
+  PortfolioName:
+    Type: String
+    Description: "AWS Service Catalog portfolio name."
+    Default: "DatamasquePortfolio"
+
+  ProductName:
+    Type: String
+    Description: "AWS Service Catalog product name."
+    Default: "DatamasqueRDSProvisioning"
+
+Resources:
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: datamasque-servicecatalog-templates
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  ServiceCatalogPortfolio:
+    Type: AWS::ServiceCatalog::Portfolio
+    Properties:
+      DisplayName: !Ref PortfolioName
+      ProviderName: Datamasque
+
+  ServiceCatalogProduct:
+    Type: AWS::ServiceCatalog::CloudFormationProduct
+    Properties:
+      Distributor: Datamasque
+      Name: !Ref ProductName
+      Owner: Datamasque
+      ProvisioningArtifactParameters:
+        - DisableTemplateValidation: false
+          Info: {"LoadTemplateFromURL": !Ref SourceTemplateURL}
+          Name: RDSProvisioning
+      ReplaceProvisioningArtifacts: true
+
+  PortfolioProductAssociation:
+    Type: AWS::ServiceCatalog::PortfolioProductAssociation
+    Properties:
+      PortfolioId: !Ref ServiceCatalogPortfolio
+      ProductId: !Ref ServiceCatalogProduct
+
+  ServiceCatalogLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - 'lambda.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: "AllowServiceCatalog"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - 'servicecatalog:*'
+                Effect: Allow
+                Resource: "*"
+
+        - PolicyName: "AllowS3"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - 's3:*'
+                Effect: Allow
+                Resource:
+                  - !GetAtt S3Bucket.Arn
+                  - !Join [ "/", [ !GetAtt S3Bucket.Arn, "*" ] ]
+
+  ServiceCatalogProductUpdateLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/service_catalog_product_update/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Timeout: 10
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          RDS_IDENTIFIER: !Ref RDSIdentifier
+          SOURCE_TEMPLATE_URL: !Ref SourceTemplateURL
+          PRODUCT_ID: !Ref ServiceCatalogProduct
+          S3_BUCKET: !Ref S3Bucket
+          S3_BUCKET_REGIONAL_DOMAIN_NAME: !GetAtt S3Bucket.RegionalDomainName
+      Role: !GetAtt ServiceCatalogLambdaRole.Arn
+      Events:
+        Schedule:
+          Type: Schedule # More info about Schedule Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-statemachine-schedule.html
+          Properties:
+            Description: Schedule to run the Service Catalog automation daily.
+            Enabled: False
+            Schedule: "rate(1 day)"
+            Input: '{}'

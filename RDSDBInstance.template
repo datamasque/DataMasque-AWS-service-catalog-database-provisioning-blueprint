@@ -4,6 +4,7 @@ Parameters:
   DBSnapshotIdentifier:
     Type: String
     Description: Enter the masked snapshot identifier that will be used to create the RDS instance.
+    AllowedValues: []
 
   DBInstanceClass:
     Type: String
@@ -38,13 +39,21 @@ Resources:
   RDSDBInstance:
     Type: AWS::RDS::DBInstance
     Properties:
-      DBSnapshotIdentifier: !Ref DBSnapshotIdentifier
-      DBInstanceClass: !Ref DBInstanceClass
-      DBInstanceIdentifier: !Ref DBInstanceIdentifier
-      OptionGroupName: !Ref OptionGroupName
-      DBParameterGroupName: !Ref DBParameterGroupName
-      DBSubnetGroupName: !Ref DBSubnetGroupName
-      AvailabilityZone: !Ref AvailabilityZone
+      DBSnapshotIdentifier:
+        Ref: DBSnapshotIdentifier
+      DBInstanceClass:
+        Ref: DBInstanceClass
+      DBInstanceIdentifier:
+        Ref: DBInstanceIdentifier
+      OptionGroupName:
+        Ref: OptionGroupName
+      DBParameterGroupName:
+        Ref: DBParameterGroupName
+      DBSubnetGroupName:
+        Ref: DBSubnetGroupName
+      AvailabilityZone:
+        Ref: AvailabilityZone
       DeleteAutomatedBackups: true
       DeletionProtection: false
-      VPCSecurityGroups: !Ref VPCSecurityGroups
+      VPCSecurityGroups:
+        Ref: VPCSecurityGroups
