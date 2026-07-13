@@ -1,0 +1,4 @@
+pytest
+moto[s3]
+boto3
+pyyaml
