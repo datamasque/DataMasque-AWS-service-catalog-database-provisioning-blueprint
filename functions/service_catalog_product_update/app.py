@@ -66,6 +66,10 @@ def lambda_handler(event, context):
                 + TEMPLATE_FILE_NAME
             },
             "Type": "CLOUD_FORMATION_TEMPLATE",
+            # Deliberate: validation makes Service Catalog fetch the template
+            # URL, which fails because the bucket blocks all public access.
+            # The source template is cfn-lint-validated in CI and this handler
+            # only injects AllowedValues, so skipping validation is safe.
             "DisableTemplateValidation": True,
         },
     )
