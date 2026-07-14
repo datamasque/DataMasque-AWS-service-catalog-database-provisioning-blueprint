@@ -93,3 +93,28 @@ def test_handler_call_shape(env):
         ProductId="prod-123", ProvisioningArtifactId="old-art"
     )
     assert result == {"response": "new-art"}
+
+
+@mock_aws
+def test_no_snapshots_raises_and_publishes_nothing(env):
+    boto3.client("s3", region_name=REGION).create_bucket(Bucket="templates-bucket")
+
+    app = importlib.reload(importlib.import_module("app"))
+
+    fake_rds = mock.Mock()
+    paginator = mock.Mock()
+    paginator.paginate.return_value = [{"DBSnapshots": []}]
+    fake_rds.get_paginator.return_value = paginator
+
+    fake_sc = mock.Mock()
+
+    def client_factory(name, *a, **k):
+        return {"rds": fake_rds, "servicecatalog": fake_sc}[name]
+
+    with mock.patch.object(app.boto3, "client", side_effect=client_factory):
+        with pytest.raises(RuntimeError, match="No DB snapshots found"):
+            app.lambda_handler({}, None)
+
+    # existing artifact untouched
+    fake_sc.create_provisioning_artifact.assert_not_called()
+    fake_sc.delete_provisioning_artifact.assert_not_called()

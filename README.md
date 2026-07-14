@@ -93,15 +93,34 @@ by `RDSDBInstance.template`:
 | AvailabilityZone       | RDS Availability Zone.                                                  |
 | VPCSecurityGroups      | RDS Security Group.                                                     |
 
-## After deploying
+## After deploying: end-user IAM access
 
-Once the stack is created, grant end users access so they can self-serve:
+The stack creates the portfolio and product but does **not** grant anyone
+access to launch them. To let end users self-serve, they need three things:
 
-1. [Create an IAM group for end users to launch products](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstarted-iamenduser.html).
-2. [Grant end users access to the portfolio](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstarted-deploy.html).
-3. [Verify the end-user experience](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstarted-verify.html).
+1. **Service Catalog end-user permissions** — attach the AWS managed policy
+   [`AWSServiceCatalogEndUserFullAccess`](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/controlling_access.html)
+   to the end users' IAM group/role. This grants the `servicecatalog:*` and
+   `cloudformation:*` actions needed to browse and provision products.
+2. **Portfolio access** — associate that IAM group/role with the deployed
+   portfolio (Service Catalog console → Portfolios → *Access* tab, or
+   `aws servicecatalog associate-principal-with-portfolio`). The portfolio ID
+   is in the stack's `ServiceCatalogPortfolioId` output.
+3. **Permissions for the provisioned resources** — this blueprint ships
+   **without a launch constraint**, so provisioning runs with the *end user's
+   own* credentials. Users therefore also need IAM permissions for what the
+   template creates, at minimum:
+   `rds:RestoreDBInstanceFromDBSnapshot`, `rds:DescribeDBInstances`,
+   `rds:DescribeDBSnapshots`, `rds:CreateTags`, `rds:DeleteDBInstance`
+   (for terminate), and the `ec2:Describe*` calls RDS makes for subnet/security
+   group placement.
 
-Reference: <https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstarted.html>
+   Alternatively, add a
+   [launch constraint](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/constraints-launch.html)
+   with a role holding those RDS/EC2 permissions; end users then only need
+   items 1 and 2, which is the recommended least-privilege setup.
+
+Reference walkthrough: <https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstarted.html>
 
 ## Notes
 
