@@ -1,5 +1,6 @@
 import os
 import urllib.request
+from datetime import datetime, timezone
 
 import boto3
 import yaml
@@ -50,10 +51,16 @@ def lambda_handler(event, context):
 
     servicecatalog = boto3.client("servicecatalog")
 
+    # Create the new artifact before deleting the old ones: AWS refuses to
+    # delete the last provisioning artifact of a product, so destroy-first
+    # would fail on a product with a single (i.e. the current) artifact.
     response = servicecatalog.create_provisioning_artifact(
         ProductId=product_id,
         Parameters={
-            "Name": "default",
+            # AWS allows duplicate artifact names (Id is the unique key), but
+            # name-based lookups (e.g. ProvisionProduct by ProvisioningArtifactName)
+            # fail on ambiguity, so timestamp the name to keep re-runs unambiguous.
+            "Name": datetime.now(timezone.utc).strftime("snapshots-%Y%m%d-%H%M%S"),
             "Info": {
                 "LoadTemplateFromURL": "https://"
                 + s3_bucket_regional_domain_name
@@ -61,6 +68,10 @@ def lambda_handler(event, context):
                 + TEMPLATE_FILE_NAME
             },
             "Type": "CLOUD_FORMATION_TEMPLATE",
+            # Deliberate: validation makes Service Catalog fetch the template
+            # URL, which fails because the bucket blocks all public access.
+            # The source template is cfn-lint-validated in CI and this handler
+            # only injects AllowedValues, so skipping validation is safe.
             "DisableTemplateValidation": True,
         },
     )

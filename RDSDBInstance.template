@@ -88,6 +88,6 @@ Resources:
         Fn::Join:
           - '-'
           - - Ref: DBClusterIdentifier
-            - 'dtq'
+            - 'instance-1'
       Engine:
         Ref: DBClusterEngine
