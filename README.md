@@ -117,21 +117,25 @@ access to launch them. To let end users self-serve, they need three things:
    portfolio (Service Catalog console → Portfolios → *Access* tab, or
    `aws servicecatalog associate-principal-with-portfolio`). The portfolio ID
    is in the stack's `ServiceCatalogPortfolioId` output.
-3. **Permissions for the provisioned resources** — this blueprint ships
-   **without a launch constraint**, so provisioning runs with the *end user's
-   own* credentials. Users therefore also need IAM permissions for what the
-   template creates, at minimum:
-   `rds:RestoreDBClusterFromSnapshot`, `rds:CreateDBInstance`,
+3. **Permissions for the provisioned resources** — provisioning needs IAM
+   permissions for whatever the template creates. The recommended way to grant
+   them is a
+   [launch constraint](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/constraints-launch.html):
+   attach a role holding the RDS/EC2/KMS permissions listed below to the
+   product, and Service Catalog provisions with that role rather than the
+   caller's. End users then need only items 1 and 2, and hold no standing RDS
+   access of their own.
+
+   This blueprint ships **without** a launch constraint, so out of the box
+   provisioning runs with the *end user's own* credentials. That is simpler to
+   set up but less robust: every end user needs standing RDS permissions, at
+   minimum `rds:RestoreDBClusterFromSnapshot`, `rds:CreateDBInstance`,
    `rds:DescribeDBClusters`, `rds:DescribeDBInstances`,
    `rds:DescribeDBClusterSnapshots`, `rds:CreateTags`,
    `rds:DeleteDBCluster`/`rds:DeleteDBInstance` (for terminate), the
    `ec2:Describe*` calls RDS makes for subnet/security group placement, and
    `kms:CreateGrant`/`kms:DescribeKey` on the KMS key if `KmsKeyId` is used.
-
-   Alternatively, add a
-   [launch constraint](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/constraints-launch.html)
-   with a role holding those RDS/EC2/KMS permissions; end users then only need
-   items 1 and 2, which is the recommended least-privilege setup.
+   These are the same permissions the launch-constraint role needs.
 
 Reference walkthrough: <https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstarted.html>
 
