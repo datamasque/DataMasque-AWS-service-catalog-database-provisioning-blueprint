@@ -35,6 +35,26 @@ Parameters:
     Type: List<AWS::EC2::SecurityGroup::Id>
     Description: Enter the Security Group ID for the new RDS instance.
 
+  KmsKeyId:
+    Type: String
+    Default: ""
+    Description: Optional KMS key ID/ARN for storage encryption. Leave blank to use the default RDS KMS key.
+
+  EnableDeletionProtection:
+    Type: String
+    Default: "false"
+    AllowedValues: [ "true", "false" ]
+    Description: Enable RDS deletion protection. Leave false so the provisioned product can be terminated (self-service teardown).
+
+Conditions:
+  # Long form only: the update Lambda parses this template with yaml.safe_load,
+  # which cannot construct short-form (!Not/!If/!Equals) tags.
+  HasKmsKey:
+    Fn::Not:
+      - Fn::Equals:
+          - Ref: KmsKeyId
+          - ""
+
 Resources:
   RDSDBInstance:
     Type: AWS::RDS::DBInstance
@@ -53,6 +73,17 @@ Resources:
         Ref: DBSubnetGroupName
       AvailabilityZone:
         Ref: AvailabilityZone
-      DeletionProtection: false
+      DeletionProtection:
+        Ref: EnableDeletionProtection
+      StorageEncrypted:
+        Fn::If:
+          - HasKmsKey
+          - true
+          - Ref: AWS::NoValue
+      KmsKeyId:
+        Fn::If:
+          - HasKmsKey
+          - Ref: KmsKeyId
+          - Ref: AWS::NoValue
       VPCSecurityGroups:
         Ref: VPCSecurityGroups
