@@ -21,7 +21,7 @@ Parameters:
 
   DBClusterIdentifier:
     Type: String
-    Description: Enter the identified for the new RDS Cluster.
+    Description: Enter the identifier for the new RDS Cluster.
 
   DBClusterSubnetGroupName:
     Type: String
@@ -30,6 +30,24 @@ Parameters:
   VPCSecurityGroups:
     Type: List<AWS::EC2::SecurityGroup::Id>
     Description: Enter the Security Group ID for the new RDS Cluster.
+
+  KmsKeyId:
+    Type: String
+    Default: ""
+    Description: Optional KMS key ID/ARN to (re-)encrypt the restored cluster. Leave blank to inherit the snapshot's encryption.
+
+  EnableDeletionProtection:
+    Type: String
+    Default: "false"
+    AllowedValues: [ "true", "false" ]
+    Description: Enable deletion protection on the Aurora cluster. Leave false so the provisioned product can be terminated (self-service teardown).
+
+Conditions:
+  HasKmsKey:
+    Fn::Not:
+      - Fn::Equals:
+          - Ref: KmsKeyId
+          - ""
 
 Resources:
 
@@ -48,7 +66,13 @@ Resources:
         Ref: DBClusterSubnetGroupName
       VpcSecurityGroupIds:
         Ref: VPCSecurityGroups
-      DeletionProtection: False
+      DeletionProtection:
+        Ref: EnableDeletionProtection
+      KmsKeyId:
+        Fn::If:
+          - HasKmsKey
+          - Ref: KmsKeyId
+          - Ref: "AWS::NoValue"
 
   RDSDBInstance:
     Type: AWS::RDS::DBInstance
@@ -60,10 +84,10 @@ Resources:
         Ref: DBClusterIdentifier
       DBInstanceClass:
         Ref: DBInstanceClass
-      DBInstanceIdentifier: "datamasque-instance-restored"
-#        Join:
-#          - '-'
-#          - - Ref: DBClusterIdentifier
-#            - 'dtq'
+      DBInstanceIdentifier:
+        Fn::Join:
+          - '-'
+          - - Ref: DBClusterIdentifier
+            - 'instance-1'
       Engine:
         Ref: DBClusterEngine

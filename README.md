@@ -1,110 +1,173 @@
-# AWS Aurora Service Catalog Provisioning Template
+# AWS Service Catalog Database Provisioning Blueprint (Aurora)
 
-## Introduction
+> **Reference blueprint — adapt to your environment.** This repository is a
+> starting point, not a turnkey product. Review and harden IAM, networking,
+> secrets, and TLS for your own environment before any production use.
 
-DataMasque AWS blueprint template is written in AWS CloudFormation format. The purpose of this template is to create a reusable data provisioning pipeline that calls DataMasque APIs to produce masked data that's safe for consumption in non-production environment.
+[DataMasque](https://datamasque.com) replaces sensitive data with realistic,
+synthetically identical customer data so teams can work with production-like data without exposing
+PII. This blueprint provisions a **masked** Aurora cluster + instance through
+**AWS Service Catalog**: it publishes a self-service product whose only
+selectable snapshots are the masked DB cluster snapshots produced by the
+[Aurora masking blueprint](https://github.com/datamasque/DataMasque-AWS-Aurora-masking-stepfunctions-blueprint).
+End users launch the product to restore a fresh Aurora cluster from a masked
+snapshot, so non-production environments never receive raw production data.
 
-The diagram below describes the DataMasque reference architecture in AWS.  This CloudFormation template is used to set up AWS Service Catalog Products to give end-users access to provision RDS Aurora instances from a [masked RDS Aurora snapshot](https://github.com/datamasque/DataMasque-AWS-Aurora-masking-stepfunctions-blueprint) - this incorporates the **self-service** steps highlighted in purple.  
+**Learn more:** [datamasque.com](https://datamasque.com) ·
+[Product docs](https://datamasque.com/portal/documentation/) ·
+[Book a demo](https://datamasque.com/request-a-demo)
+
+---
+
+A scheduled Lambda keeps the Service Catalog product's snapshot list current by
+reading the available masked cluster snapshots and re-publishing the
+provisioning template. This blueprint provisions databases from already-masked
+snapshots; it does not itself call the DataMasque API.
 
 ![Reference deployment](reference_deployment.png "Reference deployment")
 
-For masking and provisioning RDS, please use the following templates:
-- Automate masking RDS snapshots: [DataMasque AWS RDS Masking Step Functions CloudFormation Template](https://github.com/datamasque/DataMasque-AWS-RDS-masking-stepfunctions-blueprint).
-- Provision RDS instances: use the **main-rds** branch from [AWS Service Catalog Provisioning template](https://github.com/datamasque/DataMasque-AWS-service-catalog-database-provisioning-blueprint).
+The diagram above shows the DataMasque reference architecture in AWS. This
+blueprint covers the **self-service provisioning** steps highlighted in purple.
 
-The solution expects a few parameters as listed below:
+## RDS vs Aurora
 
-| Parameter         | Description                                                                            |
-|-------------------|----------------------------------------------------------------------------------------|
-| SourceTemplateURL | The URL used as a source for the template used on for the AWS Service Catalog Product. |
-| RDSIdentifier     | RDS cluster identifier used to retrieve the snapshot list.                             |
-| PortfolioName     | AWS Service Catalog portfolio name.                                                    |  
-| ProductName       | AWS Service Catalog product name.                                                      |
+This repository ships two branches:
 
-### Prerequisites
+- `main-aurora` — provisions an **Aurora cluster + instance** from a masked DB
+  cluster snapshot (this branch).
+- `main-rds` — provisions a standalone **RDS DB instance** from a masked DB
+  snapshot. Check it out with `git checkout main-rds`.
 
-- AWS CLI configured with appropriate credential for the target AWS account.
-- AWS SAM
-  CLI: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html
-- Python runtime 3.9 installed.
+For masking the source cluster snapshots first, see the
+[AWS Aurora masking (Step Functions) blueprint](https://github.com/datamasque/DataMasque-AWS-Aurora-masking-stepfunctions-blueprint).
 
-# How to use
+## Prerequisites
 
-The SAM template deploys the AWS Catalog Product and a Lambda function used the update the list if snapshots available to be used as source to the new Aurora Cluster.
+- AWS CLI configured with credentials for the target account.
+- The [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html).
+- Python 3.12 (Lambda runtime; only needed locally to run the tests).
+- At least one **masked** Aurora DB cluster snapshot already produced by the
+  Aurora masking blueprint.
 
-The template expects arguments that can be passed using a configuration file:
+## Deploy
 
-samconfig.toml
+This is an AWS SAM application. Build and deploy it with the SAM CLI:
+
+```bash
+sam build
+sam deploy --guided
+```
+
+`sam deploy --guided` prompts for the stack name, region, and the deployer
+parameters below, then writes a `samconfig.toml` you can reuse with
+`sam deploy`.
+
+### Deployer parameters (template.yaml)
+
+| Parameter            | Description                                                                        | Default                               |
+|----------------------|------------------------------------------------------------------------------------|---------------------------------------|
+| `SourceTemplateURL`  | URL of the provisioning template the update Lambda fetches and re-publishes.        | _(required)_                          |
+| `RDSIdentifier`      | Source Aurora cluster identifier whose masked snapshots feed the product.           | _(required)_                          |
+| `TemplateBucketName` | Globally-unique name for the S3 bucket holding published templates.                 | `datamasque-servicecatalog-templates` |
+| `PortfolioName`      | Service Catalog portfolio display name.                                             | `DatamasquePortfolio`                 |
+| `ProductName`        | Service Catalog product name.                                                       | `DatamasqueRDSProvisioning`           |
+
+> `TemplateBucketName` must be globally unique across all AWS accounts. Override
+> the default to avoid collisions.
+
+#### Example samconfig.toml
 
 ```toml
 version = 0.1
-[default]
-[default.deploy]
 [default.deploy.parameters]
 stack_name = "service-catalog-automation"
-s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-xxxx"
 s3_prefix = "service-catalog-automation"
 region = "ap-southeast-2"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-disable_rollback = true
-parameter_overrides = "SourceTemplateURL=\"https:file:////github.com/datamasque/DataMasque-AWS-service-catalog-database-provisioning-blueprint/blob/dev/RDSDBInstance.template\" RDSIdentifier=\"dtq-postgresql-blueprint-testing-xxxx\""
-image_repositories = []
+parameter_overrides = "SourceTemplateURL=\"https://raw.githubusercontent.com/datamasque/DataMasque-AWS-service-catalog-database-provisioning-blueprint/main-aurora/RDSDBInstance.template\" RDSIdentifier=\"your-aurora-cluster-id\""
 ```
 
-## AWS Service Catalog RDS Provisioning template
+## End-user provisioning parameters
 
-AWS Service catalog gives access to the users to deploy AWS resources without having to have access to underline resources.
-
-
-## Parameters
+End users launching the Service Catalog product supply the parameters consumed
+by `RDSDBInstance.template`:
 
 | Parameter                   | Description                                                            |
 |-----------------------------|------------------------------------------------------------------------|
-| DBClusterSnapshotIdentifier | The masked snapshot that will be used to provision the new RDS cluster |
-| DBInstanceClass             | Instance class for the new RDS instance.                               |
-| DBClusterEngine             | RDS Cluster Engine.                                                    |
-| DBClusterEngineVersion      | RDS Cluster Engine Version.                                            |
-| DBClusterIdentifier         | RDS Cluster identifier.                                                |
-| DBClusterSubnetGroupName    | RDS Cluster Subnet Group.                                              |
-| VPCSecurityGroups           | RDS Security Group.                                                    |
+| DBClusterSnapshotIdentifier | The masked snapshot used to provision the new Aurora cluster.          |
+| DBInstanceClass             | Instance class for the new Aurora instance.                            |
+| DBClusterEngine             | Aurora cluster engine.                                                 |
+| DBClusterEngineVersion      | Aurora cluster engine version.                                         |
+| DBClusterIdentifier         | Aurora cluster identifier.                                             |
+| DBClusterSubnetGroupName    | Aurora cluster subnet group.                                           |
+| VPCSecurityGroups           | Aurora security group(s).                                              |
+| KmsKeyId                    | Optional KMS key to re-encrypt the restored cluster. Leave blank to inherit the snapshot's encryption — a snapshot of an unencrypted source stays unencrypted, so set a key if you need encryption-at-rest guaranteed. |
+
+## After deploying: end-user IAM access
+
+The stack creates the portfolio and product but does **not** grant anyone
+access to launch them. To let end users self-serve, they need three things:
+
+1. **Service Catalog end-user permissions** — attach the AWS managed policy
+   [`AWSServiceCatalogEndUserFullAccess`](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/controlling_access.html)
+   to the end users' IAM group/role. This grants the `servicecatalog:*` and
+   `cloudformation:*` actions needed to browse and provision products.
+2. **Portfolio access** — associate that IAM group/role with the deployed
+   portfolio (Service Catalog console → Portfolios → *Access* tab, or
+   `aws servicecatalog associate-principal-with-portfolio`). The portfolio ID
+   is in the stack's `ServiceCatalogPortfolioId` output.
+3. **Permissions for the provisioned resources** — provisioning needs IAM
+   permissions for whatever the template creates. The recommended way to grant
+   them is a
+   [launch constraint](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/constraints-launch.html):
+   attach a role holding the RDS/EC2/KMS permissions listed below to the
+   product, and Service Catalog provisions with that role rather than the
+   caller's. End users then need only items 1 and 2, and hold no standing RDS
+   access of their own.
+
+   This blueprint ships **without** a launch constraint, so out of the box
+   provisioning runs with the *end user's own* credentials. That is simpler to
+   set up but less robust: every end user needs standing RDS permissions, at
+   minimum `rds:RestoreDBClusterFromSnapshot`, `rds:CreateDBInstance`,
+   `rds:DescribeDBClusters`, `rds:DescribeDBInstances`,
+   `rds:DescribeDBClusterSnapshots`, `rds:CreateTags`,
+   `rds:DeleteDBCluster`/`rds:DeleteDBInstance` (for terminate), the
+   `ec2:Describe*` calls RDS makes for subnet/security group placement, and
+   `kms:CreateGrant`/`kms:DescribeKey` on the KMS key if `KmsKeyId` is used.
+   These are the same permissions the launch-constraint role needs.
+
+Reference walkthrough: <https://docs.aws.amazon.com/servicecatalog/latest/adminguide/getstarted.html>
 
 ## Notes
 
-- The **AWS Service Catalog RDS Provisioning template** should be used as a provisioning method of a **DataMasque** masked snapshot.
-- **The parameters** to the created AWS Service Catalog products **need reflect your setup** and **preferred configurations** within your AWS Environment.
-- **The Lambda has a event trigger that can be used to invoke the Lambda:**
-```yaml
-Events:
-        Schedule:
-          Type: Schedule # More info about Schedule Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-statemachine-schedule.html
-          Properties:
-            Description: Schedule to run the Service Catalog automation daily.
-            Enabled: False
-            Schedule: "rate(1 day)"
-            Input: '{}'
-```
+- Use this product as the provisioning method for a **DataMasque** masked
+  snapshot.
+- The provisioning parameters **need to reflect your setup** and **preferred
+  configuration** within your AWS environment.
+- The update Lambda has a (disabled) scheduled trigger; enable it in
+  `template.yaml` to refresh the snapshot list automatically.
 
-## Template Limitation.
+### Template note
 
-**To use this template with an RDS instance instead of Aurora clusters, you need to change the API call to retrieve the snapshots.**
-```python
-response = rds.describe_db_cluster_snapshots(
-    DBClusterIdentifier=rds_identifier
-  )
-```
-
-**Due to a limitation on the python library used to update the CloudFormation template, the short form of calling functions is not supported.**
-
-**This is not supported:**
-```yaml
-Name:
-  - Domain: !Ref RootDomainName
-```
-
-**This is:**
+CloudFormation short-form intrinsic functions (`!Ref`, `!Join`) are not used in
+`RDSDBInstance.template` because the PyYAML loader that rewrites it does not
+understand them. Use the long form instead, e.g.:
 
 ```yaml
-- Domain:
-    Ref: RootDomainName
+DBInstanceIdentifier:
+  Fn::Join:
+    - '-'
+    - - Ref: DBClusterIdentifier
+      - 'instance-1'
 ```
+
+---
+
+## Related DataMasque blueprints
+
+- [AWS RDS masking (Step Functions)](https://github.com/datamasque/DataMasque-AWS-RDS-masking-stepfunctions-blueprint)
+- [Azure DB masking (Logic Apps)](https://github.com/datamasque/DataMasque-Azure-DB-masking-logicapps-blueprint)
+- [AWS Cross-Account Bucket Access](https://github.com/datamasque/DataMasque-AWS-Cross-Account-Bucket-Access)
+- [AWS ECS Deployment](https://github.com/datamasque/DataMasque-AWS-ECS-Deployment)
+- [masque-bricks (Databricks)](https://github.com/datamasque/masque-bricks)

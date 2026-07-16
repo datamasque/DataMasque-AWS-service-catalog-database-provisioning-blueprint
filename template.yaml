@@ -10,6 +10,11 @@ Parameters:
     Type: String
     Description: RDS DB Instance or Cluster identifier.
 
+  TemplateBucketName:
+    Type: String
+    Description: "Globally-unique S3 bucket name for published provisioning templates."
+    Default: "datamasque-servicecatalog-templates"
+
   PortfolioName:
     Type: String
     Description: "AWS Service Catalog portfolio name."
@@ -25,7 +30,7 @@ Resources:
   S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: datamasque-servicecatalog-templates
+      BucketName: !Ref TemplateBucketName
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -80,8 +85,12 @@ Resources:
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
+              # Service Catalog admin APIs are not resource-scopable, so they stay
+              # on "*"; the action list is the least-privilege control here.
               - Action:
-                  - 'servicecatalog:*'
+                  - 'servicecatalog:CreateProvisioningArtifact'
+                  - 'servicecatalog:DeleteProvisioningArtifact'
+                  - 'servicecatalog:DescribeProductAsAdmin'
                 Effect: Allow
                 Resource: "*"
 
@@ -89,11 +98,11 @@ Resources:
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
+              # Handler only writes the published template; it never reads from S3.
               - Action:
-                  - 's3:*'
+                  - 's3:PutObject'
                 Effect: Allow
                 Resource:
-                  - !GetAtt S3Bucket.Arn
                   - !Join [ "/", [ !GetAtt S3Bucket.Arn, "*" ] ]
 
   ServiceCatalogProductUpdateLambda:
@@ -101,8 +110,8 @@ Resources:
     Properties:
       CodeUri: functions/service_catalog_product_update/
       Handler: app.lambda_handler
-      Runtime: python3.9
-      Timeout: 10
+      Runtime: python3.12
+      Timeout: 60
       Architectures:
         - x86_64
       Environment:
@@ -121,3 +130,14 @@ Resources:
             Enabled: False
             Schedule: "rate(1 day)"
             Input: '{}'
+
+Outputs:
+  TemplateBucketName:
+    Description: S3 bucket holding the published provisioning templates.
+    Value: !Ref S3Bucket
+  ServiceCatalogProductId:
+    Description: ID of the Service Catalog CloudFormation product.
+    Value: !Ref ServiceCatalogProduct
+  ServiceCatalogPortfolioId:
+    Description: ID of the Service Catalog portfolio.
+    Value: !Ref ServiceCatalogPortfolio
